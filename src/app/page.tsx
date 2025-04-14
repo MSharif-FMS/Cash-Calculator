@@ -25,6 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface Participant {
   id: string;
@@ -52,34 +53,36 @@ const CalculationHistory = ({ history, onClose }: { history: CalculationResult[]
       {history.length === 0 ? (
         <p>No calculation history available.</p>
       ) : (
-        <div className="grid gap-4">
-          {history.map((item, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle>Calculation {index + 1}</CardTitle>
-                <CardDescription>Timestamp: {item.timestamp}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Participants:</p>
-                <ul>
-                  {item.participants.map((p) => (
-                    <li key={p.id}>
-                      {p.id} - ${p.purchase_amount} - Bank: {p.has_bank_account ? 'Yes' : 'No'}
-                    </li>
-                  ))}
-                </ul>
-                <p>Results:</p>
-                <ul>
-                  {item.results.map((r) => (
-                    <li key={r.id}>
-                      {r.id}: Net Payment: {r.net_bank_payment?.toFixed(2) || r.cash_contributed?.toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <ScrollArea className="h-[400px] w-full">
+          <div className="grid gap-4">
+            {history.map((item, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle>Calculation {index + 1}</CardTitle>
+                  <CardDescription>Timestamp: {item.timestamp}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p>Participants:</p>
+                  <ul>
+                    {item.participants.map((p) => (
+                      <li key={p.id}>
+                        {p.id} - ${p.purchase_amount} - Bank: {p.has_bank_account ? 'Yes' : 'No'}
+                      </li>
+                    ))}
+                  </ul>
+                  <p>Results:</p>
+                  <ul>
+                    {item.results.map((r) => (
+                      <li key={r.id}>
+                        {r.id}: Net Payment: {r.net_bank_payment?.toFixed(2) || r.cash_contributed?.toFixed(2)}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
       )}
       <Button onClick={onClose}>Close</Button>
     </DialogContent>

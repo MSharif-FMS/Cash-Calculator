@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface Participant {
   id: string;
@@ -27,6 +35,57 @@ interface Participant {
   net_bank_payment?: number;
   cash_contributed?: number;
 }
+
+interface CalculationResult {
+  participants: Participant[];
+  results: Participant[];
+  timestamp: string;
+}
+
+const CalculationHistory = ({ history, onClose }: { history: CalculationResult[]; onClose: () => void }) => {
+  return (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Calculation History</DialogTitle>
+        <DialogDescription>Review previous calculations.</DialogDescription>
+      </DialogHeader>
+      {history.length === 0 ? (
+        <p>No calculation history available.</p>
+      ) : (
+        <div className="grid gap-4">
+          {history.map((item, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <CardTitle>Calculation {index + 1}</CardTitle>
+                <CardDescription>Timestamp: {item.timestamp}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Participants:</p>
+                <ul>
+                  {item.participants.map((p) => (
+                    <li key={p.id}>
+                      {p.id} - ${p.purchase_amount} - Bank: {p.has_bank_account ? 'Yes' : 'No'}
+                    </li>
+                  ))}
+                </ul>
+                <p>Results:</p>
+                <ul>
+                  {item.results.map((r) => (
+                    <li key={r.id}>
+                      {r.id}: Net Payment: {r.net_bank_payment?.toFixed(2) || r.cash_contributed?.toFixed(2)}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      <Button onClick={onClose}>Close</Button>
+    </DialogContent>
+  );
+};
+
 
 export default function Home() {
   const [participants, setParticipants] = useState<Participant[]>([
@@ -39,6 +98,19 @@ export default function Home() {
   const [newParticipantPurchaseAmount, setNewParticipantPurchaseAmount] = useState<number | ''>('');
   const [calculationResults, setCalculationResults] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [calculationHistory, setCalculationHistory] = useState<CalculationResult[]>([]);
+  const [openHistory, setOpenHistory] = useState(false);
+
+  useEffect(() => {
+    const storedHistory = localStorage.getItem('calculationHistory');
+    if (storedHistory) {
+      setCalculationHistory(JSON.parse(storedHistory));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('calculationHistory', JSON.stringify(calculationHistory));
+  }, [calculationHistory]);
 
   const calculatePayments = () => {
     setError(null);
@@ -75,7 +147,16 @@ export default function Home() {
       cash_contributed: p.purchase_amount,
     }));
 
-    setCalculationResults([...updatedBankParticipants, ...updatedNonBankParticipants]);
+    const results = [...updatedBankParticipants, ...updatedNonBankParticipants];
+    setCalculationResults(results);
+
+    const newCalculation: CalculationResult = {
+      participants: [...participants],
+      results: results,
+      timestamp: new Date().toLocaleString(),
+    };
+
+    setCalculationHistory(prevHistory => [...prevHistory, newCalculation]);
   };
 
   const addParticipant = () => {
@@ -181,9 +262,21 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      <Button className="mt-4" onClick={calculatePayments}>
-        Calculate Payments
-      </Button>
+      <div className="flex gap-4 mt-4">
+        <Button onClick={calculatePayments}>
+          Calculate Payments
+        </Button>
+
+        <Dialog open={openHistory} onOpenChange={setOpenHistory}>
+          <DialogTrigger asChild>
+            <Button variant="secondary">
+              Review Calculation History
+            </Button>
+          </DialogTrigger>
+          <CalculationHistory history={calculationHistory} onClose={() => setOpenHistory(false)} />
+        </Dialog>
+      </div>
+
 
       {error && (
         <Alert variant="destructive" className="mt-4 w-full max-w-md">

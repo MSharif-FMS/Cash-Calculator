@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -9,6 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Icons } from '@/components/icons';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 interface Participant {
   id: string;
@@ -130,6 +138,33 @@ export default function Home() {
             <Label htmlFor="bank-account">Has Bank Account</Label>
           </div>
           <Button onClick={addParticipant}>Add Participant</Button>
+        </CardContent>
+      </Card>
+
+      <Card className="w-full max-w-md mt-4">
+        <CardHeader>
+          <CardTitle>Current Participants</CardTitle>
+          <CardDescription>List of participants added</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Bank Account</TableHead>
+                <TableHead>Purchase Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {participants.map((participant) => (
+                <TableRow key={participant.id}>
+                  <TableCell>{participant.id}</TableCell>
+                  <TableCell>{participant.has_bank_account ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>{participant.purchase_amount}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

@@ -1,4 +1,4 @@
-{
+{{
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@formatjs/intl-localematcher": "^0.5.2",
     "@genkit-ai/googleai": "^1.0.4",
     "@genkit-ai/next": "^1.0.4",
     "@hookform/resolvers": "^4.1.3",

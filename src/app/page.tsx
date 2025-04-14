@@ -41,9 +41,10 @@ interface CalculationResult {
   participants: Participant[];
   results: Participant[];
   timestamp: string;
+  id: string;
 }
 
-const CalculationHistory = ({ history, onClose }: { history: CalculationResult[]; onClose: () => void }) => {
+const CalculationHistory = ({ history, onClose, onDelete }: { history: CalculationResult[]; onClose: () => void; onDelete: (id: string) => void }) => {
   return (
     <DialogContent className="max-w-2xl">
       <DialogHeader>
@@ -55,10 +56,15 @@ const CalculationHistory = ({ history, onClose }: { history: CalculationResult[]
       ) : (
         <ScrollArea className="h-[400px] w-full">
           <div className="grid gap-4">
-            {history.map((item, index) => (
-              <Card key={index}>
+            {history.map((item) => (
+              <Card key={item.id}>
                 <CardHeader>
-                  <CardTitle>Calculation {index + 1}</CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Calculation {history.findIndex(h => h.id === item.id) + 1}</CardTitle>
+                    <Button variant="destructive" size="sm" onClick={() => onDelete(item.id)}>
+                      Delete
+                    </Button>
+                  </div>
                   <CardDescription>Timestamp: {item.timestamp}</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -154,6 +160,7 @@ export default function Home() {
     setCalculationResults(results);
 
     const newCalculation: CalculationResult = {
+      id: Date.now().toString(),
       participants: [...participants],
       results: results,
       timestamp: new Date().toLocaleString(),
@@ -191,6 +198,11 @@ export default function Home() {
     setParticipants(updatedParticipants);
     setCalculationResults([]);
     setError(null);
+  };
+
+  const handleDeleteHistoryItem = (id: string) => {
+    const updatedHistory = calculationHistory.filter(item => item.id !== id);
+    setCalculationHistory(updatedHistory);
   };
 
   return (
@@ -276,7 +288,7 @@ export default function Home() {
               Review Calculation History
             </Button>
           </DialogTrigger>
-          <CalculationHistory history={calculationHistory} onClose={() => setOpenHistory(false)} />
+          <CalculationHistory history={calculationHistory} onClose={() => setOpenHistory(false)} onDelete={handleDeleteHistoryItem} />
         </Dialog>
       </div>
 
@@ -317,3 +329,4 @@ export default function Home() {
     </div>
   );
 }
+

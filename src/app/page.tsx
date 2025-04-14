@@ -102,6 +102,13 @@ export default function Home() {
     setNewParticipantPurchaseAmount('');
   };
 
+  const handleDeleteParticipant = (id: string) => {
+    const updatedParticipants = participants.filter(participant => participant.id !== id);
+    setParticipants(updatedParticipants);
+    setCalculationResults([]);
+    setError(null);
+  };
+
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-8">
       <Card className="w-full max-w-md">
@@ -153,6 +160,7 @@ export default function Home() {
                 <TableHead>ID</TableHead>
                 <TableHead>Bank Account</TableHead>
                 <TableHead>Purchase Amount</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -161,6 +169,11 @@ export default function Home() {
                   <TableCell>{participant.id}</TableCell>
                   <TableCell>{participant.has_bank_account ? 'Yes' : 'No'}</TableCell>
                   <TableCell>{participant.purchase_amount}</TableCell>
+                  <TableCell>
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteParticipant(participant.id)}>
+                      Delete
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

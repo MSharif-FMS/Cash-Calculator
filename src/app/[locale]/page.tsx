@@ -362,3 +362,4 @@ export default function Home({ params: { locale } }: { params: { locale: Locale 
     </div>
   );
 }
+

@@ -1,15 +1,19 @@
 import type {NextConfig} from 'next';
-import { i18n } from './src/app/i18n/i18n-config';
+
 
 const nextConfig: NextConfig = {
+  output: 'export', // Required for static HTML export
+  images: { unoptimized: true },
+   // Optional: Add trailingSlash if links break
+   trailingSlash: true,
+   basePath: process.env.NODE_ENV === 'production' ? '/Cash-Calculator' : '',
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  i18n,
+  }
 };
 
 export default nextConfig;

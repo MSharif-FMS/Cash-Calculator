@@ -32,6 +32,9 @@ import { getDictionary } from '../i18n/dictionaries';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Moon, Sun } from 'lucide-react'; // Import Moon and Sun icons
+import { useTheme } from 'next-themes'; // Import useTheme hook
+
 
 interface Participant {
   id: string;
@@ -115,7 +118,8 @@ export default function Home({ params: { locale } }: { params: { locale: Locale 
   const [error, setError] = useState<string | null>(null);
   const [calculationHistory, setCalculationHistory] = useState<CalculationResult[]>([]);
   const [openHistory, setOpenHistory] = useState(false);
-    const router = useRouter();
+  const router = useRouter();
+  const { theme, setTheme } = useTheme(); // Use next-themes hook
 
   useEffect(() => {
     const storedHistory = localStorage.getItem('calculationHistory');
@@ -216,18 +220,26 @@ export default function Home({ params: { locale } }: { params: { locale: Locale 
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-8">
-      <Select value={locale} onValueChange={(value) => router.push(`/${value}`)}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder={dictionary["Select Language"]} />
-        </SelectTrigger>
-        <SelectContent>
-          {i18n.locales.map((locale) => (
-            <SelectItem key={locale} value={locale}>
-              {locale}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex justify-between w-full max-w-md mb-4">
+        <Select value={locale} onValueChange={(value) => router.push(`/${value}`)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={dictionary["Select Language"]} />
+          </SelectTrigger>
+          <SelectContent>
+            {i18n.locales.map((locale) => (
+              <SelectItem key={locale} value={locale}>
+                {locale}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Theme Toggle Button */}
+        <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+          {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{dictionary["SettleSmart"]}</CardTitle>

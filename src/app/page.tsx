@@ -45,55 +45,236 @@ interface CalculationResult {
   id: string;
 }
 
+
 const CalculationHistory = ({ history, onClose, onDelete }: { history: CalculationResult[]; onClose: () => void; onDelete: (id: string) => void }) => {
   const { t } = useLanguage();
   
+  // Calculate summary statistics across all history records
+  const historySummary = React.useMemo(() => {
+    if (history.length === 0) return null;
+    
+    // Initialize summary data
+    const summary = {
+      totalCalculations: history.length,
+      totalPurchaseAmount: 0,
+      totalParticipants: new Set(),
+      bankAccountsUsed: 0,
+      cashOnlyUsed: 0,
+      averagePurchasePerCalculation: 0,
+      totalNetBankPayments: 0,
+      totalCashContributed: 0,
+    };
+    
+    // Accumulate data from all history records
+    history.forEach(item => {
+      // Add purchase amounts
+      const calculationTotal = item.participants.reduce((sum, p) => sum + p.purchase_amount, 0);
+      summary.totalPurchaseAmount += calculationTotal;
+      
+      // Count unique participants
+      item.participants.forEach(p => summary.totalParticipants.add(p.id));
+      
+      // Count bank vs cash calculations
+      const hasBankAccount = item.participants.some(p => p.has_bank_account);
+      if (hasBankAccount) {
+        summary.bankAccountsUsed++;
+      } else {
+        summary.cashOnlyUsed++;
+      }
+      
+      // Add up all net bank payments and cash contributions
+      item.results.forEach(r => {
+        if (r.net_bank_payment) {
+          summary.totalNetBankPayments += r.net_bank_payment;
+        }
+        if (r.cash_contributed) {
+          summary.totalCashContributed += r.cash_contributed;
+        }
+      });
+    });
+    
+    // Calculate averages
+    summary.averagePurchasePerCalculation = summary.totalPurchaseAmount / summary.totalCalculations;
+    
+    return summary;
+  }, [history]);
+  
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-5xl">
       <DialogHeader>
-        <DialogTitle>{t('reviewHistory')}</DialogTitle>
+        <DialogTitle className="text-2xl">{t('reviewHistory')}</DialogTitle>
         <DialogDescription>{t('reviewPreviousCalculations')}</DialogDescription>
       </DialogHeader>
+      
       {history.length === 0 ? (
         <p>{t('noCalculationHistory')}</p>
       ) : (
-        <ScrollArea className="h-[400px] w-full">
-          <div className="grid gap-4">
-            {history.map((item) => (
-              <Card key={item.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>{t('calculation')} {history.findIndex(h => h.id === item.id) + 1}</CardTitle>
-                    <Button variant="destructive" size="sm" onClick={() => onDelete(item.id)}>
-                      {t('delete')}
-                    </Button>
-                  </div>
-                  <CardDescription>{t('timestamp')}: {item.timestamp}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p>{t('participants')}:</p>
-                  <ul>
-                    {item.participants.map((p) => (
-                      <li key={p.id}>
-                        {p.id} - ${p.purchase_amount} - {t('bankAccount')}: {p.has_bank_account ? t('yes') : t('no')}
-                      </li>
-                    ))}
-                  </ul>
-                  <p>{t('results')}:</p>
-                  <ul>
-                    {item.results.map((r) => (
-                      <li key={r.id}>
-                        {r.id}: {t('netPayment')}: {r.net_bank_payment?.toFixed(2) || r.cash_contributed?.toFixed(2)}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
+        <>
+          {/* Overall Summary Card */}
+          <Card className="mb-6 bg-primary/10 shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Icons.history className="h-5 w-5" />
+                {t('overallSummary')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-3 bg-background rounded-lg shadow-sm">
+                  <p className="text-sm text-muted-foreground">{t('totalCalculations')}</p>
+                  <p className="text-2xl font-bold">{historySummary?.totalCalculations}</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg shadow-sm">
+                  <p className="text-sm text-muted-foreground">{t('totalPurchaseAmount')}</p>
+                  <p className="text-2xl font-bold">{historySummary?.totalPurchaseAmount.toFixed(2)}</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg shadow-sm">
+                  <p className="text-sm text-muted-foreground">{t('uniqueParticipants')}</p>
+                  <p className="text-2xl font-bold">{historySummary?.totalParticipants.size}</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg shadow-sm">
+                  <p className="text-sm text-muted-foreground">{t('averagePurchasePerCalculation')}</p>
+                  <p className="text-2xl font-bold">{historySummary?.averagePurchasePerCalculation.toFixed(2)}</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg shadow-sm">
+                  <p className="text-sm text-muted-foreground">{t('totalNetBankPayments')}</p>
+                  <p className="text-2xl font-bold">{historySummary?.totalNetBankPayments.toFixed(2)}</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg shadow-sm">
+                  <p className="text-sm text-muted-foreground">{t('totalCashContributed')}</p>
+                  <p className="text-2xl font-bold">{historySummary?.totalCashContributed.toFixed(2)}</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg shadow-sm">
+                  <p className="text-sm text-muted-foreground">{t('bankAccountsUsed')}</p>
+                  <p className="text-2xl font-bold">{historySummary?.bankAccountsUsed}</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg shadow-sm">
+                  <p className="text-sm text-muted-foreground">{t('cashOnlyUsed')}</p>
+                  <p className="text-2xl font-bold">{historySummary?.cashOnlyUsed}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Individual History Records */}
+          <ScrollArea className="h-[400px] w-full">
+            <div className="grid gap-6">
+              {history.map((item) => {
+                const calculationTotal = item.participants.reduce((sum, p) => sum + p.purchase_amount, 0);
+                return (
+                  <Card key={item.id} className="border-l-4 border-primary">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="flex items-center gap-2">
+                          <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">
+                            {history.findIndex(h => h.id === item.id) + 1}
+                          </span>
+                          {t('calculation')}
+                        </CardTitle>
+                        <Button variant="destructive" size="sm" onClick={() => onDelete(item.id)}>
+                          {t('delete')}
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-4 mt-2">
+                        <CardDescription className="flex items-center gap-1">
+                          <Icons.calendar className="h-4 w-4" />
+                          {item.timestamp}
+                        </CardDescription>
+                        <CardDescription className="flex items-center gap-1">
+                          <Icons.dollarSign className="h-4 w-4" />
+                          {t('totalPurchaseAmount')}: {calculationTotal.toFixed(2)}
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4">
+                        <div>
+                          <h4 className="font-medium mb-2 flex items-center gap-2">
+                            <Icons.users className="h-4 w-4" />
+                            {t('participants')}
+                          </h4>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>#</TableHead>
+                                <TableHead>{t('id')}</TableHead>
+                                <TableHead>{t('bankAccount')}</TableHead>
+                                <TableHead>{t('purchaseAmount')}</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {item.participants.map((p, index) => (
+                                <TableRow key={p.id}>
+                                  <TableCell>{index + 1}</TableCell>
+                                  <TableCell>{p.id}</TableCell>
+                                  <TableCell>{p.has_bank_account ? t('yes') : t('no')}</TableCell>
+                                  <TableCell>{p.purchase_amount.toFixed(2)}</TableCell>
+                                </TableRow>
+                              ))}
+                              <TableRow className="font-bold bg-muted/50">
+                                <TableCell colSpan={3}>{t('total')}</TableCell>
+                                <TableCell>{calculationTotal.toFixed(2)}</TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-2 flex items-center gap-2">
+                            <Icons.calculator className="h-4 w-4" />
+                            {t('calculationResults')}
+                          </h4>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>{t('participant')}</TableHead>
+                                <TableHead>{t('bankAccount')}</TableHead>
+                                {item.results.some(r => r.gross_bank_payment) && (
+                                  <TableHead>{t('grossPayment')}</TableHead>
+                                )}
+                                {item.results.some(r => r.cash_received) && (
+                                  <TableHead>{t('cashReceived')}</TableHead>
+                                )}
+                                {item.results.some(r => r.net_bank_payment) && (
+                                  <TableHead>{t('netPayment')}</TableHead>
+                                )}
+                                {item.results.some(r => r.cash_contributed) && (
+                                  <TableHead>{t('cashContributed')}</TableHead>
+                                )}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {item.results.map((r) => (
+                                <TableRow key={r.id}>
+                                  <TableCell>{r.id}</TableCell>
+                                  <TableCell>{r.has_bank_account ? t('yes') : t('no')}</TableCell>
+                                  {item.results.some(r => r.gross_bank_payment) && (
+                                    <TableCell>{r.gross_bank_payment?.toFixed(2) || '-'}</TableCell>
+                                  )}
+                                  {item.results.some(r => r.cash_received) && (
+                                    <TableCell>{r.cash_received?.toFixed(2) || '-'}</TableCell>
+                                  )}
+                                  {item.results.some(r => r.net_bank_payment) && (
+                                    <TableCell>{r.net_bank_payment?.toFixed(2) || '-'}</TableCell>
+                                  )}
+                                  {item.results.some(r => r.cash_contributed) && (
+                                    <TableCell>{r.cash_contributed?.toFixed(2) || '-'}</TableCell>
+                                  )}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </>
       )}
-      <Button onClick={onClose}>{t('close')}</Button>
+      <Button onClick={onClose} className="mt-4">{t('close')}</Button>
     </DialogContent>
   );
 };
@@ -211,84 +392,96 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-8">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t('appName')}</CardTitle>
-          <CardDescription>{t('participants')}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="participant-id">{t('participantId')}</Label>
-            <Input
-              id="participant-id"
-              placeholder={t('enterId')}
-              value={newParticipantId}
-              onChange={(e) => setNewParticipantId(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="purchase-amount">{t('purchaseAmount')}</Label>
-            <Input
-              id="purchase-amount"
-              type="number"
-              placeholder={t('enterAmount')}
-              value={newParticipantPurchaseAmount}
-              onChange={(e) => setNewParticipantPurchaseAmount(e.target.value === '' ? '' : Number(e.target.value))}
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="bank-account"
-              checked={newParticipantBankAccount}
-              onCheckedChange={(checked) => setNewParticipantBankAccount(!!checked)}
-            />
-            <Label htmlFor="bank-account">{t('hasBankAccount')}</Label>
-          </div>
-          <Button onClick={addParticipant}>{t('addParticipant')}</Button>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-6">
+        {/* Add Participant Card */}
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>{t('addParticipant')}</CardTitle>
+            <CardDescription>{t('enterParticipantDetails')}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="participant-id">{t('participantId')}</Label>
+              <Input
+                id="participant-id"
+                placeholder={t('enterId')}
+                value={newParticipantId}
+                onChange={(e) => setNewParticipantId(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="purchase-amount">{t('purchaseAmount')}</Label>
+              <Input
+                id="purchase-amount"
+                type="number"
+                placeholder={t('enterAmount')}
+                value={newParticipantPurchaseAmount}
+                onChange={(e) => setNewParticipantPurchaseAmount(e.target.value === '' ? '' : Number(e.target.value))}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="bank-account"
+                checked={newParticipantBankAccount}
+                onCheckedChange={(checked) => setNewParticipantBankAccount(!!checked)}
+              />
+              <Label htmlFor="bank-account">{t('hasBankAccount')}</Label>
+            </div>
+            <Button onClick={addParticipant}>{t('addParticipant')}</Button>
+          </CardContent>
+        </Card>
 
-      <Card className="w-full max-w-md mt-4">
-        <CardHeader>
-          <CardTitle>{t('currentParticipants')}</CardTitle>
-          <CardDescription>{t('participantsAdded')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('id')}</TableHead>
-                <TableHead>{t('bankAccount')}</TableHead>
-                <TableHead>{t('purchaseAmount')}</TableHead>
-                <TableHead>{t('actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {participants.map((participant) => (
-                <TableRow key={participant.id}>
-                  <TableCell>{participant.id}</TableCell>
-                  <TableCell>{participant.has_bank_account ? t('yes') : t('no')}</TableCell>
-                  <TableCell>{participant.purchase_amount}</TableCell>
-                  <TableCell>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteParticipant(participant.id)}>
-                      {t('delete')}
-                    </Button>
-                  </TableCell>
+        {/* Participants List Card */}
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>{t('currentParticipants')}</CardTitle>
+            <CardDescription>{t('participantsAdded')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>{t('id')}</TableHead>
+                  <TableHead>{t('bankAccount')}</TableHead>
+                  <TableHead>{t('purchaseAmount')}</TableHead>
+                  <TableHead>{t('actions')}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {participants.map((participant, index) => (
+                  <TableRow key={participant.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{participant.id}</TableCell>
+                    <TableCell>{participant.has_bank_account ? t('yes') : t('no')}</TableCell>
+                    <TableCell>{participant.purchase_amount}</TableCell>
+                    <TableCell>
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteParticipant(participant.id)}>
+                        {t('delete')}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <TableRow className="font-bold bg-muted/50">
+                  <TableCell colSpan={2}>{t('total')}</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>{participants.reduce((sum, p) => sum + p.purchase_amount, 0)}</TableCell>
+                  <TableCell>-</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
 
-      <div className="flex gap-4 mt-4">
-        <Button onClick={calculatePayments}>
+      <div className="flex gap-4 mt-6">
+        <Button onClick={calculatePayments} className="px-8">
           {t('calculatePayments')}
         </Button>
 
         <Dialog open={openHistory} onOpenChange={setOpenHistory}>
           <DialogTrigger asChild>
-            <Button variant="secondary">
+            <Button variant="secondary" className="px-8">
               {t('reviewHistory')}
             </Button>
           </DialogTrigger>
@@ -298,7 +491,7 @@ export default function Home() {
 
 
       {error && (
-        <Alert variant="destructive" className="mt-4 w-full max-w-md">
+        <Alert variant="destructive" className="mt-4 w-full max-w-4xl">
           <Icons.close className="h-4 w-4" />
           <AlertTitle>{t('error')}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
@@ -306,7 +499,7 @@ export default function Home() {
       )}
 
       {calculationResults.length > 0 && (
-        <Card className="mt-4 w-full max-w-md">
+        <Card className="mt-4 w-full max-w-4xl">
           <CardHeader>
             <CardTitle>{t('calculationResults')}</CardTitle>
           </CardHeader>

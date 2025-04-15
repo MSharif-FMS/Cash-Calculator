@@ -44,7 +44,7 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 220 10% 39%;
+    --background: 220 10% 29%;
     --foreground: 220 14% 96%;
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
@@ -52,7 +52,7 @@ body {
     --popover-foreground: 0 0% 98%;
     --primary: 204 86% 53%; /* Calming blue */
     --primary-foreground: 0 0% 9%;
-    --secondary: 220 10% 39%; /* Light gray */
+    --secondary: 220 10% 29%; /* Light gray */
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;

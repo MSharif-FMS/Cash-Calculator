@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/language-context';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -45,14 +46,16 @@ interface CalculationResult {
 }
 
 const CalculationHistory = ({ history, onClose, onDelete }: { history: CalculationResult[]; onClose: () => void; onDelete: (id: string) => void }) => {
+  const { t } = useLanguage();
+  
   return (
     <DialogContent className="max-w-2xl">
       <DialogHeader>
-        <DialogTitle>Calculation History</DialogTitle>
-        <DialogDescription>Review previous calculations.</DialogDescription>
+        <DialogTitle>{t('reviewHistory')}</DialogTitle>
+        <DialogDescription>{t('reviewPreviousCalculations')}</DialogDescription>
       </DialogHeader>
       {history.length === 0 ? (
-        <p>No calculation history available.</p>
+        <p>{t('noCalculationHistory')}</p>
       ) : (
         <ScrollArea className="h-[400px] w-full">
           <div className="grid gap-4">
@@ -60,27 +63,27 @@ const CalculationHistory = ({ history, onClose, onDelete }: { history: Calculati
               <Card key={item.id}>
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle>Calculation {history.findIndex(h => h.id === item.id) + 1}</CardTitle>
+                    <CardTitle>{t('calculation')} {history.findIndex(h => h.id === item.id) + 1}</CardTitle>
                     <Button variant="destructive" size="sm" onClick={() => onDelete(item.id)}>
-                      Delete
+                      {t('delete')}
                     </Button>
                   </div>
-                  <CardDescription>Timestamp: {item.timestamp}</CardDescription>
+                  <CardDescription>{t('timestamp')}: {item.timestamp}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Participants:</p>
+                  <p>{t('participants')}:</p>
                   <ul>
                     {item.participants.map((p) => (
                       <li key={p.id}>
-                        {p.id} - ${p.purchase_amount} - Bank: {p.has_bank_account ? 'Yes' : 'No'}
+                        {p.id} - ${p.purchase_amount} - {t('bankAccount')}: {p.has_bank_account ? t('yes') : t('no')}
                       </li>
                     ))}
                   </ul>
-                  <p>Results:</p>
+                  <p>{t('results')}:</p>
                   <ul>
                     {item.results.map((r) => (
                       <li key={r.id}>
-                        {r.id}: Net Payment: {r.net_bank_payment?.toFixed(2) || r.cash_contributed?.toFixed(2)}
+                        {r.id}: {t('netPayment')}: {r.net_bank_payment?.toFixed(2) || r.cash_contributed?.toFixed(2)}
                       </li>
                     ))}
                   </ul>
@@ -90,13 +93,14 @@ const CalculationHistory = ({ history, onClose, onDelete }: { history: Calculati
           </div>
         </ScrollArea>
       )}
-      <Button onClick={onClose}>Close</Button>
+      <Button onClick={onClose}>{t('close')}</Button>
     </DialogContent>
   );
 };
 
 
 export default function Home() {
+  const { t } = useLanguage();
   const [participants, setParticipants] = useState<Participant[]>([
     { id: '1', has_bank_account: true, purchase_amount: 20 },
     { id: '2', has_bank_account: false, purchase_amount: 30 },
@@ -132,7 +136,7 @@ export default function Home() {
     const cash_purchases = non_bank_participants.reduce((sum, p) => sum + p.purchase_amount, 0);
 
     if (bank_purchases === 0) {
-      setError('Error: Cannot distribute cash. No bank participants.');
+      setError(t('noBankParticipants'));
       setCalculationResults([]);
       return;
     }
@@ -171,13 +175,13 @@ export default function Home() {
 
   const addParticipant = () => {
     if (!newParticipantId || newParticipantPurchaseAmount === '') {
-      alert('Please fill in all fields.');
+      alert(t('fillAllFields'));
       return;
     }
 
     const newAmount = Number(newParticipantPurchaseAmount);
     if (isNaN(newAmount)) {
-      alert('Please enter a valid purchase amount.');
+      alert(t('enterValidAmount'));
       return;
     }
 
@@ -209,27 +213,27 @@ export default function Home() {
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>SettleSmart</CardTitle>
-          <CardDescription>Enter participants and purchase amounts to calculate payments.</CardDescription>
+          <CardTitle>{t('appName')}</CardTitle>
+          <CardDescription>{t('participants')}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="participant-id">Participant ID</Label>
+            <Label htmlFor="participant-id">{t('participantId')}</Label>
             <Input
               id="participant-id"
-              placeholder="Enter ID"
+              placeholder={t('enterId')}
               value={newParticipantId}
               onChange={(e) => setNewParticipantId(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="purchase-amount">Purchase Amount</Label>
+            <Label htmlFor="purchase-amount">{t('purchaseAmount')}</Label>
             <Input
               id="purchase-amount"
               type="number"
-              placeholder="Enter amount"
+              placeholder={t('enterAmount')}
               value={newParticipantPurchaseAmount}
-              onChange={(e) => setNewParticipantPurchaseAmount(e.target.value)}
+              onChange={(e) => setNewParticipantPurchaseAmount(e.target.value === '' ? '' : Number(e.target.value))}
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -238,36 +242,36 @@ export default function Home() {
               checked={newParticipantBankAccount}
               onCheckedChange={(checked) => setNewParticipantBankAccount(!!checked)}
             />
-            <Label htmlFor="bank-account">Has Bank Account</Label>
+            <Label htmlFor="bank-account">{t('hasBankAccount')}</Label>
           </div>
-          <Button onClick={addParticipant}>Add Participant</Button>
+          <Button onClick={addParticipant}>{t('addParticipant')}</Button>
         </CardContent>
       </Card>
 
       <Card className="w-full max-w-md mt-4">
         <CardHeader>
-          <CardTitle>Current Participants</CardTitle>
-          <CardDescription>List of participants added</CardDescription>
+          <CardTitle>{t('currentParticipants')}</CardTitle>
+          <CardDescription>{t('participantsAdded')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Bank Account</TableHead>
-                <TableHead>Purchase Amount</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t('id')}</TableHead>
+                <TableHead>{t('bankAccount')}</TableHead>
+                <TableHead>{t('purchaseAmount')}</TableHead>
+                <TableHead>{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {participants.map((participant) => (
                 <TableRow key={participant.id}>
                   <TableCell>{participant.id}</TableCell>
-                  <TableCell>{participant.has_bank_account ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>{participant.has_bank_account ? t('yes') : t('no')}</TableCell>
                   <TableCell>{participant.purchase_amount}</TableCell>
                   <TableCell>
                     <Button variant="destructive" size="sm" onClick={() => handleDeleteParticipant(participant.id)}>
-                      Delete
+                      {t('delete')}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -279,13 +283,13 @@ export default function Home() {
 
       <div className="flex gap-4 mt-4">
         <Button onClick={calculatePayments}>
-          Calculate Payments
+          {t('calculatePayments')}
         </Button>
 
         <Dialog open={openHistory} onOpenChange={setOpenHistory}>
           <DialogTrigger asChild>
             <Button variant="secondary">
-              Review Calculation History
+              {t('reviewHistory')}
             </Button>
           </DialogTrigger>
           <CalculationHistory history={calculationHistory} onClose={() => setOpenHistory(false)} onDelete={handleDeleteHistoryItem} />
@@ -296,7 +300,7 @@ export default function Home() {
       {error && (
         <Alert variant="destructive" className="mt-4 w-full max-w-md">
           <Icons.close className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{t('error')}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -304,21 +308,21 @@ export default function Home() {
       {calculationResults.length > 0 && (
         <Card className="mt-4 w-full max-w-md">
           <CardHeader>
-            <CardTitle>Calculation Results</CardTitle>
+            <CardTitle>{t('calculationResults')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul>
               {calculationResults.map((participant) => (
                 <li key={participant.id} className="mb-2">
-                  <strong>Participant {participant.id}:</strong>
+                  <strong>{t('participant')} {participant.id}:</strong>
                   {participant.has_bank_account ? (
                     <>
-                      <p>Gross Payment: {participant.gross_bank_payment?.toFixed(2)}</p>
-                      <p>Cash Received: {participant.cash_received?.toFixed(2)}</p>
-                      <p className="text-accent">Net Payment: {participant.net_bank_payment?.toFixed(2)}</p>
+                      <p>{t('grossPayment')}: {participant.gross_bank_payment?.toFixed(2)}</p>
+                      <p>{t('cashReceived')}: {participant.cash_received?.toFixed(2)}</p>
+                      <p className="text-accent">{t('netPayment')}: {participant.net_bank_payment?.toFixed(2)}</p>
                     </>
                   ) : (
-                    <p className="text-accent">Cash Contributed: {participant.cash_contributed?.toFixed(2)}</p>
+                    <p className="text-accent">{t('cashContributed')}: {participant.cash_contributed?.toFixed(2)}</p>
                   )}
                 </li>
               ))}

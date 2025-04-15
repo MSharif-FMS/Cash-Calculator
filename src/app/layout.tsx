@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import {Geist, Geist_Mono} from 'next/font/google';
 import './globals.css';
+
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { LanguageProvider } from '@/contexts/language-context';
 import { AppHeader } from '@/components/app-header';

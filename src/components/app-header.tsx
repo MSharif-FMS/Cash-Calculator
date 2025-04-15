@@ -13,7 +13,7 @@ export function AppHeader() {
       <div className="container max-w-7xl mx-auto flex items-center justify-between h-full px-4">
         <div className="flex items-center">
           <LayoutDashboard className="mr-2 h-6 w-6" /> {/* Add the icon here */}
-          <span className="font-bold text-xl">SettleSmart</span> {/* Use the application name directly */}
+          <span className="font-bold text-xl">{t('appName')}</span> {/* Use the application name directly */}
         </div>
         <div className="flex items-center space-x-4">
          <span className='m-4'> <ThemeToggle /></span>

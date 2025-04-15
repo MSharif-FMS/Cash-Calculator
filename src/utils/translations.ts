@@ -2,7 +2,7 @@ export const translations = {
   en: {
     appName: "Cash Calculator",
     participants: "Participants",
-    participantId: "Participant ID",
+    participantId: "Participant Name",
     purchaseAmount: "Purchase Amount",
     hasBankAccount: "Has Bank Account",
     addParticipant: "Add Participant",
@@ -40,7 +40,7 @@ export const translations = {
   ar: {
     appName: "حاسبة النقود",
     participants: "المشاركون",
-    participantId: "معرف المشارك",
+    participantId: "اسم المشارك",
     purchaseAmount: "مبلغ الشراء",
     hasBankAccount: "لديه حساب مصرفي",
     addParticipant: "إضافة مشارك",

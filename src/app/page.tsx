@@ -107,7 +107,7 @@ export default function Home() {
     { id: '3', has_bank_account: true, purchase_amount: 50 },
   ]);
   const [newParticipantId, setNewParticipantId] = useState('');
-  const [newParticipantBankAccount, setNewParticipantBankAccount] = useState(false);
+  const [newParticipantBankAccount, setNewParticipantBankAccount] = useState(true);
   const [newParticipantPurchaseAmount, setNewParticipantPurchaseAmount] = useState<number | ''>('');
   const [calculationResults, setCalculationResults] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);

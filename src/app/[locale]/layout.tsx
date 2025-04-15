@@ -4,6 +4,8 @@ import '../globals.css';
 import { i18n } from '../i18n/i18n-config';
 import { getDictionary } from '../i18n/dictionaries';
 import { Locale } from '../i18n/i18n-config';
+import { ThemeProvider } from 'next-themes'; // Import ThemeProvider
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,8 +38,11 @@ export default async function RootLayout({
   return (
     <html lang={params.locale} dir={params.locale === 'ar' ? 'rtl' : 'ltr'}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         {children}
+       </ThemeProvider>
       </body>
     </html>
   );
 }
+

@@ -99,6 +99,124 @@ const CalculationHistory = ({ history, onClose, onDelete }: { history: Calculati
     return summary;
   }, [history]);
   
+  const exportToWord = () => {
+    // Create a new document
+    const content = document.createElement('div');
+    
+    // Add title and summary
+    const title = document.createElement('h1');
+    title.textContent = t('calculationHistory');
+    content.appendChild(title);
+    
+    // Add summary section if we have history
+    if (historySummary) {
+      const summarySection = document.createElement('div');
+      summarySection.innerHTML = `
+        <h2>${t('overallSummary')}</h2>
+        <p>${t('totalCalculations')}: ${historySummary.totalCalculations}</p>
+        <p>${t('totalPurchaseAmount')}: ${historySummary.totalPurchaseAmount.toFixed(2)}</p>
+        <p>${t('uniqueParticipants')}: ${historySummary.totalParticipants.size}</p>
+        <p>${t('averagePurchasePerCalculation')}: ${historySummary.averagePurchasePerCalculation.toFixed(2)}</p>
+        <p>${t('totalNetBankPayments')}: ${historySummary.totalNetBankPayments.toFixed(2)}</p>
+        <p>${t('totalCashContributed')}: ${historySummary.totalCashContributed.toFixed(2)}</p>
+        <p>${t('bankAccountsUsed')}: ${historySummary.bankAccountsUsed}</p>
+        <p>${t('cashOnlyUsed')}: ${historySummary.cashOnlyUsed}</p>
+      `;
+      content.appendChild(summarySection);
+    }
+    
+    // Add each calculation record
+    history.forEach((item, index) => {
+      const calculationTotal = item.participants.reduce((sum, p) => sum + p.purchase_amount, 0);
+      
+      const recordSection = document.createElement('div');
+      recordSection.innerHTML = `
+        <h2>${t('calculation')} ${index + 1}</h2>
+        <p>${t('date')}: ${item.timestamp}</p>
+        <p>${t('totalPurchaseAmount')}: ${calculationTotal.toFixed(2)}</p>
+        
+        <h3>${t('participants')}</h3>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <th>#</th>
+            <th>${t('id')}</th>
+            <th>${t('bankAccount')}</th>
+            <th>${t('purchaseAmount')}</th>
+          </tr>
+          ${item.participants.map((p, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${p.id}</td>
+              <td>${p.has_bank_account ? t('yes') : t('no')}</td>
+              <td>${p.purchase_amount.toFixed(2)}</td>
+            </tr>
+          `).join('')}
+          <tr style="font-weight: bold;">
+            <td colspan="3">${t('total')}</td>
+            <td>${calculationTotal.toFixed(2)}</td>
+          </tr>
+        </table>
+        
+        <h3>${t('calculationResults')}</h3>
+        <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
+          <tr>
+            <th>${t('participant')}</th>
+            <th>${t('bankAccount')}</th>
+            ${item.results.some(r => r.gross_bank_payment) ? `<th>${t('grossPayment')}</th>` : ''}
+            ${item.results.some(r => r.cash_received) ? `<th>${t('cashReceived')}</th>` : ''}
+            ${item.results.some(r => r.net_bank_payment) ? `<th>${t('netPayment')}</th>` : ''}
+            ${item.results.some(r => r.cash_contributed) ? `<th>${t('cashContributed')}</th>` : ''}
+          </tr>
+          ${item.results.map(r => `
+            <tr>
+              <td>${r.id}</td>
+              <td>${r.has_bank_account ? t('yes') : t('no')}</td>
+              ${item.results.some(r => r.gross_bank_payment) ? `<td>${r.gross_bank_payment?.toFixed(2) || '-'}</td>` : ''}
+              ${item.results.some(r => r.cash_received) ? `<td>${r.cash_received?.toFixed(2) || '-'}</td>` : ''}
+              ${item.results.some(r => r.net_bank_payment) ? `<td>${r.net_bank_payment?.toFixed(2) || '-'}</td>` : ''}
+              ${item.results.some(r => r.cash_contributed) ? `<td>${r.cash_contributed?.toFixed(2) || '-'}</td>` : ''}
+            </tr>
+          `).join('')}
+        </table>
+      `;
+      content.appendChild(recordSection);
+      
+      // Add a page break between records (except for the last one)
+      if (index < history.length - 1) {
+        const pageBreak = document.createElement('div');
+        pageBreak.style.pageBreakAfter = 'always';
+        content.appendChild(pageBreak);
+      }
+    });
+    
+    // Create a Blob with the HTML content
+    const blob = new Blob([`
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; }
+            th { background-color: #f2f2f2; }
+            h1, h2, h3 { color: #333; }
+            .page-break { page-break-after: always; }
+          </style>
+        </head>
+        <body>
+          ${content.innerHTML}
+        </body>
+      </html>
+    `], { type: 'application/msword' });
+    
+    // Create a download link and trigger the download
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `cash-calculator-history-${new Date().toISOString().slice(0, 10)}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
   return (
     <DialogContent className="max-w-5xl">
       <DialogHeader>
@@ -155,6 +273,19 @@ const CalculationHistory = ({ history, onClose, onDelete }: { history: Calculati
               </div>
             </CardContent>
           </Card>
+          
+          {/* Export button */}
+          <div className="mb-4 flex justify-end">
+            <Button 
+              onClick={exportToWord} 
+              variant="outline" 
+              className="flex items-center gap-2"
+              disabled={history.length === 0}
+            >
+              <Icons.download className="h-4 w-4" />
+              {t('exportToWord')}
+            </Button>
+          </div>
           
           {/* Individual History Records */}
           <ScrollArea className="h-[400px] w-full">

@@ -1,3 +1,5 @@
+import { date } from "zod";
+
 export const translations = {
   en: {
     appName: "Cash Calculator",
@@ -47,6 +49,9 @@ export const translations = {
     bankAccountsUsed: "Bank Account Calculations",
     cashOnlyUsed: "Cash-Only Calculations",
     enterParticipantDetails: "Enter participant details below",
+    calculationHistory: "Calculation History",
+    date: "Date",
+    exportToWord: "Export to Word",
   },
   ar: {
     appName: "حاسبة النقود",
@@ -96,6 +101,9 @@ export const translations = {
     bankAccountsUsed: "حسابات الحساب المصرفي",
     cashOnlyUsed: "حسابات النقد فقط",
     enterParticipantDetails: "أدخل تفاصيل المشارك أدناه",
+    calculationHistory: "تاريخ الحسابات",
+    date: "التاريخ",
+    exportToWord: "تصدير إلى ملف Word",
   }
 };
 
